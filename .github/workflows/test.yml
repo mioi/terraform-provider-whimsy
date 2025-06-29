@@ -84,8 +84,8 @@ jobs:
     - name: Override provider in filesystem
       run: |
         # For examples testing, override the provider in the filesystem
-        mkdir -p ~/.terraform.d/plugins/registry.terraform.io/mioi/whimsy/1.0.0/linux_amd64
-        cp terraform-provider-whimsy ~/.terraform.d/plugins/registry.terraform.io/mioi/whimsy/1.0.0/linux_amd64/
+        mkdir -p ~/.terraform.d/plugins/github.com/mioi/terraform-provider-whimsy/1.0.0/linux_amd64
+        cp terraform-provider-whimsy ~/.terraform.d/plugins/github.com/mioi/terraform-provider-whimsy/1.0.0/linux_amd64/
     - name: Terraform Init
       run: terraform init
       working-directory: examples
