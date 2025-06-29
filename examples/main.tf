@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     whimsy = {
-      source = "hashicorp/whimsy"
+      source = "mioi/whimsy"
     }
   }
 }
