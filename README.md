@@ -100,6 +100,18 @@ resource "whimsy_color" "env_color" {
 
 The `triggers` attribute accepts a map of string values. When any value in the map changes between Terraform runs, the resource will generate a new random name. This is particularly useful when you want names to change along with infrastructure recreations.
 
+### High Cardinality Example
+
+The below configuration provides high cardinality with 48,000,000 possible unique values, making collisions extremely unlikely:
+
+```hcl
+  resource "whimsy_name" "server" {
+    parts     = ["color", "plant", "animal"]
+    delimiter = "-"
+    random    = true
+  }
+```
+
 ## Resources
 
 This provider includes four resources:
