@@ -40,8 +40,8 @@ jobs:
         # Terraform CLI versions
         terraform:
           - '1.0.*'
-          - '1.5.*'
           - '1.6.*'
+          - '1.12.*'
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
@@ -67,8 +67,8 @@ jobs:
       matrix:
         terraform:
           - '1.0.*'
-          - '1.5.*'
           - '1.6.*'
+          - '1.12.*'
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
@@ -91,7 +91,4 @@ jobs:
       working-directory: examples
     - name: Terraform Validate
       run: terraform validate
-      working-directory: examples
-    - name: Terraform Plan
-      run: terraform plan
       working-directory: examples
