@@ -36,6 +36,7 @@ func (p *WhimsyProvider) Resources(ctx context.Context) []func() resource.Resour
 		NewPlantResource,
 		NewAnimalResource,
 		NewColorResource,
+		NewWhimsyNameResource,
 	}
 }
 

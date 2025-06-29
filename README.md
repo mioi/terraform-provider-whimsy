@@ -44,18 +44,12 @@ provider "whimsy" {}
 Generate composite memorable names for your infrastructure:
 
 ```hcl
-# Generate random names for server
-resource "whimsy_color" "server_color" {}
-resource "whimsy_animal" "server_animal" {}
+# Generate individual names for server and database
+resource "whimsy_animal" "server" {}
 
-# Generate random names for database
-resource "whimsy_color" "database_color" {}
-resource "whimsy_plant" "database_plant" {}
-
-# Local variables for constructed names
-locals {
-  server_name   = "traefik-${resource.whimsy_color.server_color.name}-${resource.whimsy_animal.server_animal.name}"
-  database_name = "data-${resource.whimsy_color.database_color.name}-${resource.whimsy_plant.database_plant.name}"
+resource "whimsy_name" "database" {
+  parts     = ["color", "plant"]
+  delimiter = "-"
 }
 
 # Use in your resources
@@ -64,12 +58,12 @@ resource "aws_instance" "web" {
   instance_type = "t2.micro"
   
   tags = {
-    Name = local.server_name  # e.g., "traefik-blue-fox"
+    Name = "traefik-${resource.whimsy_animal.server.name}"  # e.g., "traefik-fox"
   }
 }
 
 resource "aws_rds_instance" "database" {
-  identifier = local.database_name  # e.g., "data-red-oak"
+  identifier = "data-${resource.whimsy_name.database.name}"  # e.g., "data-red-oak"
   engine     = "mysql"
   # ... other configuration
 }
@@ -108,11 +102,31 @@ The `triggers` attribute accepts a map of string values. When any value in the m
 
 ## Resources
 
-This provider includes three resources:
+This provider includes four resources:
 
 - `whimsy_plant` - Generates random plant names (200+ options, max 6 chars)
 - `whimsy_animal` - Generates random animal names (200+ options, max 6 chars)  
 - `whimsy_color` - Generates random color names (200+ options, max 6 chars)
+- `whimsy_name` - Combines multiple parts with configurable delimiter and order
+
+### whimsy_name Resource
+
+The `whimsy_name` resource allows you to generate combined names from multiple categories:
+
+**Arguments:**
+- `parts` - List of name parts to combine: `["plant", "animal", "color"]` (default: `["color", "animal"]`)
+- `delimiter` - String to separate parts (default: `"-"`)
+- `random` - Boolean to randomize part order (default: `false`)
+- `triggers` - Map of values that trigger regeneration when changed
+
+**Example:**
+```hcl
+resource "whimsy_name" "server" {
+  parts     = ["color", "plant"]
+  delimiter = "-"
+}
+# Generates names like: "blue-oak", "red-elm", "gold-ivy"
+```
 
 All names are lowercase, contain only English letters (a-z), and are designed to be memorable and pronounceable for infrastructure naming. Resources persist their generated names in Terraform state and only regenerate when triggers change.
 

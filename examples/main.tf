@@ -17,18 +17,13 @@ provider "aws" {
   region = "us-west-2"
 }
 
-# Generate random names for server
-resource "whimsy_color" "server_color" {}
-resource "whimsy_animal" "server_animal" {}
+# Generate random animal name for server
+resource "whimsy_animal" "server" {}
 
-# Generate random names for database
-resource "whimsy_color" "database_color" {}
-resource "whimsy_plant" "database_plant" {}
-
-# Local variables for constructed names
-locals {
-  server_name   = "traefik-${resource.whimsy_color.server_color.name}-${resource.whimsy_animal.server_animal.name}"
-  database_name = "data-${resource.whimsy_color.database_color.name}-${resource.whimsy_plant.database_plant.name}"
+# Generate combined name for database using whimsy_name
+resource "whimsy_name" "database" {
+  parts     = ["color", "plant"]
+  delimiter = "-"
 }
 
 # Example usage with AWS resources
@@ -37,12 +32,12 @@ resource "aws_instance" "web" {
   instance_type = "t2.micro"
 
   tags = {
-    Name = local.server_name
+    Name = "traefik-${resource.whimsy_animal.server.name}"
   }
 }
 
 resource "aws_db_instance" "database" {
-  identifier = local.database_name
+  identifier = "data-${resource.whimsy_name.database.name}"
   engine     = "mysql"
 
   instance_class    = "db.t3.micro"
