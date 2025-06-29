@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     whimsy = {
-      source  = "github.com/mioi/terraform-provider-whimsy"
+      source  = "github.com/mioi/whimsy"
       version = "~> 1.0"
     }
     aws = {

@@ -28,13 +28,13 @@ go install
 terraform {
   required_providers {
     whimsy = {
-      source  = "github.com/mioi/terraform-provider-whimsy"
+      source  = "github.com/mioi/whimsy"
       version = "~> 1.0"
     }
   }
 }
 
-provider "whimsy"
+provider "whimsy" {}
 ```
 
 ## Using the Provider
