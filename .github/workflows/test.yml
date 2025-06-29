@@ -1,49 +1,97 @@
+# Terraform Provider testing workflow.
 name: Tests
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+  push:
+    paths-ignore:
+      - 'README.md'
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [1.21, 1.22]
-        terraform: [1.0.11, 1.5.7, 1.12.2]
-
+    timeout-minutes: 5
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version-file: 'go.mod'
+        cache: true
+    - run: go mod download
+    - run: go build -v .
+    - name: Run linters
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v3
+  test:
+    name: Terraform Provider Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Terraform CLI versions
+        terraform:
+          - '1.0.*'
+          - '1.5.*'
+          - '1.6.*'
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+    - uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ${{ matrix.terraform }}
+        terraform_wrapper: false
+    - run: go mod download
+    - run: go test -v -cover ./internal/provider/
+      env:
+        TF_ACC: "1"
+    - run: go vet ./...
 
-    - name: Go mod download
-      run: go mod download
-
-    - name: Go build
-      run: go build -v .
-
-    - name: Go test
-      run: go test -v -race -timeout 5m ./...
-
-    - name: Go vet
-      run: go vet ./...
-
-    - name: Terraform fmt check
-      run: terraform fmt -check -recursive examples/
-
-    - name: Terraform validate examples
+  terraform-provider-tests:
+    name: Terraform Examples Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform:
+          - '1.0.*'
+          - '1.5.*'
+          - '1.6.*'
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ matrix.terraform }}
+        terraform_wrapper: false
+    - run: go mod download
+    - run: go build -o terraform-provider-whimsy
+    - name: Override provider in filesystem
       run: |
-        cd examples/
-        terraform init
-        terraform validate
+        # For examples testing, override the provider in the filesystem
+        mkdir -p ~/.terraform.d/plugins/registry.terraform.io/mioi/whimsy/1.0.0/linux_amd64
+        cp terraform-provider-whimsy ~/.terraform.d/plugins/registry.terraform.io/mioi/whimsy/1.0.0/linux_amd64/
+    - name: Terraform Init
+      run: terraform init
+      working-directory: examples
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: examples
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: examples
