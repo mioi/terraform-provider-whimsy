@@ -57,19 +57,70 @@ func TestColorNames(t *testing.T) {
 	validateNameList(t, whimsy.Colors(), "Color")
 }
 
-func TestDataSources(t *testing.T) {
-	// Test that data sources can be instantiated
-	plantDS := NewPlantDataSource()
-	animalDS := NewAnimalDataSource()
-	colorDS := NewColorDataSource()
+func TestResources(t *testing.T) {
+	// Test that resources can be instantiated
+	plantRes := NewPlantResource()
+	animalRes := NewAnimalResource()
+	colorRes := NewColorResource()
 
-	if plantDS == nil {
-		t.Error("Plant data source should not be nil")
+	if plantRes == nil {
+		t.Error("Plant resource should not be nil")
 	}
-	if animalDS == nil {
-		t.Error("Animal data source should not be nil")
+	if animalRes == nil {
+		t.Error("Animal resource should not be nil")
 	}
-	if colorDS == nil {
-		t.Error("Color data source should not be nil")
+	if colorRes == nil {
+		t.Error("Color resource should not be nil")
+	}
+}
+
+func TestResourceGeneration(t *testing.T) {
+	// Test that resources can generate valid names
+	tests := []struct {
+		name      string
+		generator func() (string, error)
+		wordList  []string
+	}{
+		{"plant", whimsy.RandomPlant, whimsy.Plants()},
+		{"animal", whimsy.RandomAnimal, whimsy.Animals()},
+		{"color", whimsy.RandomColor, whimsy.Colors()},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Generate multiple names to test randomness
+			generatedNames := make(map[string]bool)
+			for i := 0; i < 10; i++ {
+				name, err := test.generator()
+				if err != nil {
+					t.Errorf("%s generator returned error: %v", test.name, err)
+					continue
+				}
+
+				if name == "" {
+					t.Errorf("%s generator returned empty string", test.name)
+					continue
+				}
+
+				// Verify name is in the word list
+				found := false
+				for _, word := range test.wordList {
+					if word == name {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("%s generator returned '%s' which is not in the %s list", test.name, name, test.name)
+				}
+
+				generatedNames[name] = true
+			}
+
+			// Should have at least some variety (not all the same name)
+			if len(generatedNames) < 2 {
+				t.Errorf("%s generator should produce some variety, got %d unique names from 10 generations", test.name, len(generatedNames))
+			}
+		})
 	}
 }

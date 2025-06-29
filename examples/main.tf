@@ -9,17 +9,17 @@ terraform {
 provider "whimsy" {}
 
 # Generate random names for server
-data "whimsy_color" "server_color" {}
-data "whimsy_animal" "server_animal" {}
+resource "whimsy_color" "server_color" {}
+resource "whimsy_animal" "server_animal" {}
 
 # Generate random names for database
-data "whimsy_color" "database_color" {}
-data "whimsy_plant" "database_plant" {}
+resource "whimsy_color" "database_color" {}
+resource "whimsy_plant" "database_plant" {}
 
 # Local variables for constructed names
 locals {
-  server_name   = "traefik-${data.whimsy_color.server_color.name}-${data.whimsy_animal.server_animal.name}"
-  database_name = "data-${data.whimsy_color.database_color.name}-${data.whimsy_plant.database_plant.name}"
+  server_name   = "traefik-${resource.whimsy_color.server_color.name}-${resource.whimsy_animal.server_animal.name}"
+  database_name = "data-${resource.whimsy_color.database_color.name}-${resource.whimsy_plant.database_plant.name}"
 }
 
 # Example usage with AWS resources
@@ -41,7 +41,7 @@ resource "aws_rds_instance" "database" {
 # Advanced trigger usage examples:
 
 # Regenerate name when any of multiple resources change
-data "whimsy_color" "multi_trigger" {
+resource "whimsy_color" "multi_trigger" {
   triggers = {
     vpc_id    = aws_vpc.main.id
     subnet_id = aws_subnet.main.id
@@ -50,7 +50,7 @@ data "whimsy_color" "multi_trigger" {
 }
 
 # Regenerate based on resource attributes
-data "whimsy_plant" "version_trigger" {
+resource "whimsy_plant" "version_trigger" {
   triggers = {
     app_version = var.app_version
     timestamp   = timestamp()
@@ -58,7 +58,7 @@ data "whimsy_plant" "version_trigger" {
 }
 
 # Force regeneration by changing trigger values
-data "whimsy_animal" "force_regen" {
+resource "whimsy_animal" "force_regen" {
   triggers = {
     force_new = "2024-01-01" # Change this value to force regeneration
   }

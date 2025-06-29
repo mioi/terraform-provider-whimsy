@@ -32,15 +32,15 @@ func (p *WhimsyProvider) Configure(ctx context.Context, req provider.ConfigureRe
 }
 
 func (p *WhimsyProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewPlantResource,
+		NewAnimalResource,
+		NewColorResource,
+	}
 }
 
 func (p *WhimsyProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewPlantDataSource,
-		NewAnimalDataSource,
-		NewColorDataSource,
-	}
+	return []func() datasource.DataSource{}
 }
 
 func New(version string) func() provider.Provider {

@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.21, 1.22]
+        terraform: [1.0.11, 1.5.7, 1.12.2]
 
     steps:
     - uses: actions/checkout@v4
@@ -21,8 +22,28 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: Run tests
-      run: go test -v ./...
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ matrix.terraform }}
 
-    - name: Build provider
+    - name: Go mod download
+      run: go mod download
+
+    - name: Go build
       run: go build -v .
+
+    - name: Go test
+      run: go test -v -race -timeout 5m ./...
+
+    - name: Go vet
+      run: go vet ./...
+
+    - name: Terraform fmt check
+      run: terraform fmt -check -recursive examples/
+
+    - name: Terraform validate examples
+      run: |
+        cd examples/
+        terraform init
+        terraform validate
