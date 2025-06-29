@@ -1,12 +1,10 @@
 # Terraform Provider: Whimsy
 
 [![Tests](https://github.com/mioi/terraform-provider-whimsy/actions/workflows/test.yml/badge.svg)](https://github.com/mioi/terraform-provider-whimsy/actions/workflows/test.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mioi/terraform-provider-whimsy)](https://goreportcard.com/report/github.com/mioi/terraform-provider-whimsy)
 [![Release](https://img.shields.io/github/release/mioi/terraform-provider-whimsy.svg)](https://github.com/mioi/terraform-provider-whimsy/releases)
 [![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Terraform](https://img.shields.io/badge/terraform-1.0+-5C4EE5.svg)](https://www.terraform.io)
-[![HashiCorp](https://img.shields.io/badge/hashicorp-provider-623CE4.svg)](https://registry.terraform.io)
 
 A Terraform provider that generates random yet memorable names with combinations of plants, animals, and colors. Perfect for creating human-friendly names for infrastructure resources while maintaining the "pets vs. cattle" principle.
 
@@ -31,7 +29,7 @@ go install
 terraform {
   required_providers {
     whimsy = {
-      source = "hashicorp/whimsy"
+      source = "mioi/whimsy"
     }
   }
 }
@@ -43,29 +41,37 @@ provider "whimsy"
 
 ### Basic Usage
 
-Generate memorable names for your infrastructure:
+Generate composite memorable names for your infrastructure:
 
 ```hcl
-# Generate a random plant name
-data "whimsy_plant" "server" {}
+# Generate random names for server
+data "whimsy_color" "server_color" {}
+data "whimsy_animal" "server_animal" {}
 
-# Generate a random animal name
-data "whimsy_animal" "database" {}
+# Generate random names for database
+data "whimsy_color" "database_color" {}
+data "whimsy_plant" "database_plant" {}
 
-# Generate a random color name
-data "whimsy_color" "environment" {}
+# Local variables for constructed names
+locals {
+  server_name   = "traefik-${data.whimsy_color.server_color.name}-${data.whimsy_animal.server_animal.name}"
+  database_name = "data-${data.whimsy_color.database_color.name}-${data.whimsy_plant.database_plant.name}"
+}
 
 # Use in your resources
 resource "aws_instance" "web" {
-  # ... other configuration
+  ami           = "ami-0abcdef1234567890"
+  instance_type = "t2.micro"
+  
   tags = {
-    Name = "${data.whimsy_plant.server.name}-web-server"
+    Name = local.server_name  # e.g., "traefik-blue-fox"
   }
 }
 
-resource "aws_rds_instance" "main" {
+resource "aws_rds_instance" "database" {
+  identifier = local.database_name  # e.g., "data-red-oak"
+  engine     = "mysql"
   # ... other configuration
-  identifier = "${data.whimsy_animal.database.name}-db"
 }
 ```
 
