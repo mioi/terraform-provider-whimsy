@@ -2,6 +2,10 @@ package provider
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"math/rand"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -72,12 +76,13 @@ func (d *WhimsyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	tflog.Debug(ctx, "Reading "+d.typeName+" data source")
 
-	// Generate random name
-	generatedName, err := d.generator()
+	// Generate deterministic name based on triggers
+	generatedName, err := d.generateDeterministicName(data.Triggers)
 	if err != nil {
 		resp.Diagnostics.AddError("Random Generation Error", "Unable to generate random "+d.description+": "+err.Error())
 		return
 	}
+
 	data.Name = types.StringValue(generatedName)
 	data.Id = types.StringValue(generatedName)
 
@@ -86,6 +91,55 @@ func (d *WhimsyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	})
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// generateDeterministicName creates a deterministic name based on triggers
+func (d *WhimsyDataSource) generateDeterministicName(triggers types.Map) (string, error) {
+	// Create a seed based on triggers + data source type
+	seedString := d.typeName
+
+	if !triggers.IsNull() {
+		// Convert triggers to a deterministic string
+		triggerElements := triggers.Elements()
+		for key, value := range triggerElements {
+			if strValue, ok := value.(types.String); ok {
+				seedString += fmt.Sprintf("%s=%s;", key, strValue.ValueString())
+			}
+		}
+	}
+
+	// Create deterministic seed from string
+	hash := sha256.Sum256([]byte(seedString))
+	seed := int64(binary.BigEndian.Uint64(hash[:8]))
+
+	// Use seed for deterministic selection
+	return d.generateFromSeed(seed)
+}
+
+// generateFromSeed generates a name using a deterministic seed
+func (d *WhimsyDataSource) generateFromSeed(seed int64) (string, error) {
+	// Get all words for this data source type
+	var wordList []string
+	switch d.typeName {
+	case "plant":
+		wordList = whimsy.Plants()
+	case "animal":
+		wordList = whimsy.Animals()
+	case "color":
+		wordList = whimsy.Colors()
+	default:
+		return "", fmt.Errorf("unknown data source type: %s", d.typeName)
+	}
+
+	if len(wordList) == 0 {
+		return "", fmt.Errorf("no words available for %s", d.typeName)
+	}
+
+	// Create seeded random generator
+	rng := rand.New(rand.NewSource(seed))
+	index := rng.Intn(len(wordList))
+
+	return wordList[index], nil
 }
 
 // Factory functions for each type
